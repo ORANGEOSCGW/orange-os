@@ -54,6 +54,9 @@ cd wire-os
 # boot password not required for dev
 # example: ./build/build.sh -bt dev -v 1
 # <build-increment> is what the last number of the version string will be - if it's 1, it will be 3.0.1.1.ota
+# extra arguments:
+#   -ui <knotty/ncurses/teamcity>
+#      knotty is default and recommended. ncurses is cool, though you have to CTRL+C after completion
 ```
 
 ### Where is my OTA?

@@ -14,8 +14,9 @@ CURRENT_CONTAINER_NAME="vic-yocto-builder-7"
 
 function usage() {
     echo "$1"
-    echo "Usage: ./build/build.sh -bt <dev/oskr/devcloudless> -s -op <OTA-pw> -bp <boot-passwd> -v <build-increment>"
-    echo "Usage (no signing): ./build/build.sh -bt <dev/oskr/devcloudless> -bp <boot-passwd> -v <build-increment>"
+    echo "Usage: ./build/build.sh -bt <dev/oskr/devcloudless> -s -op <OTA-pw> -bp <boot-passwd> -v <build-increment> -ui <ui-option>"
+    echo "Usage (no signing): ./build/build.sh -bt <dev/oskr/devcloudless> -bp <boot-passwd> -v <build-increment> -ui <ui-option>"
+    echo "Valid UI options are: knotty, ncurses, taskexp_ncurses, or teamcity. Default is knotty."
     exit 1
 }
 
@@ -93,6 +94,16 @@ function is_victor_there_and_compatible() {
 	echo "OELinux and victor compat versions are the same"
 }
 
+#knotty, ncurses, taskexp_ncurses or teamcity - default knotty
+function what_ui() {
+    GIVEN_UI="$1"
+    if [[ "${GIVEN_UI}" != "knotty" && "${GIVEN_UI}" != "ncurses" && "${GIVEN_UI}" != "taskexp_ncurses" && "${GIVEN_UI}" != "teamcity" ]]; then
+        errorMsg "Invalid UI option: ${GIVEN_UI}"
+        usage
+    fi
+    UI_FLAG="-u ${GIVEN_UI}"
+}
+
 while [ $# -gt 0 ]; do
     case "$1" in
         -bt) BOT_TYPE="$2"; shift ;;
@@ -101,6 +112,7 @@ while [ $# -gt 0 ]; do
         -s) DO_SIGN=1 ;;
         -v) BUILD_INCREMENT="$2"; shift ;;
         -au) are_you_wire; AUTO_UPDATE=1 ;;
+        -ui) what_ui "$2"; shift ;;
         *)
             usage "unknown option: $1"
             exit 1 ;;
@@ -162,8 +174,8 @@ function buildMsg() {
 	echo
 }
 
-YOCTO_CLEAN_COMMAND="echo -e \"\e[1;32mCleaning some recipes...\e[0m\" && echo && clean-${BOT_TYPE}"
-YOCTO_BUILD_COMMAND="echo && echo -e \"\e[1;32mBuilding the OS...\e[0m\" && echo && build-${BOT_TYPE}"
+YOCTO_CLEAN_COMMAND="echo -e \"\e[1;32mCleaning some recipes...\e[0m\" && echo && clean-${BOT_TYPE} ${UI_FLAG}"
+YOCTO_BUILD_COMMAND="echo && echo -e \"\e[1;32mBuilding the OS...\e[0m\" && echo && build-${BOT_TYPE} ${UI_FLAG}"
 
 echo "Building a $BOT_TYPE OTA"
 export BOOT_IMAGE_SIGNING_PASSWORD="${BOOT_PASSWORD}"
