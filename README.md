@@ -29,9 +29,14 @@ This is based off of the leaked [vicos-oelinux](https://github.com/kercre123/vic
 
 WireOS is in the dropdown box in [https://devsetup.froggitti.net/](https://devsetup.froggitti.net/). Put your unlocked bot into recovery mode (hold the button for 15 seconds on the charger), head to the site, choose wireOS, then go through the process.
 
-## Build with Docker (recommended)
+## Build
 
+- WireOS can be built in Docker or on bare metal.
 - Note: you will need a somewhat beefy **x86_64 Linux** machine with at least 16GB of RAM and 100GB of free space.
+    -   Yocto builds every single part of the OS from scratch, which is why it is so space-consuming.
+
+### Build in Docker (recommended)
+
 - **You do not need to make a container yourself. Just follow these steps. The build script handles it for you.**
 
 1. [Install Docker](https://docs.docker.com/engine/install/), git, and wget.
@@ -52,15 +57,9 @@ sudo chmod 660 /var/run/docker.sock
 git clone https://github.com/os-vector/wire-os --recurse-submodules
 cd wire-os
 ./build/build.sh -bt <dev/oskr> -bp <boot-passwd> -v <build-increment>
-# boot password not required for dev
-# example: ./build/build.sh -bt dev -v 1
-# <build-increment> is what the last number of the version string will be - if it's 1, it will be 3.0.1.1.ota
-# extra arguments:
-#   -ui <knotty/ncurses/teamcity>
-#      knotty is default and recommended. ncurses is cool, though you have to CTRL+C after completion
 ```
 
-## Build on bare metal
+### Build on bare metal
 
 1. Run a [distribution supported by Yocto](https://docs.yoctoproject.org/dev/ref-manual/system-requirements.html#supported-linux-distributions).
 
@@ -86,17 +85,31 @@ sudo apt-get install -y sudo build-essential chrpath cpio debianutils \
 git clone https://github.com/os-vector/wire-os --recurse-submodules
 cd wire-os
 ./build/build.sh -nd -bt <dev/oskr> -bp <boot-passwd> -v <build-increment>
-# boot password not required for dev
-# example: ./build/build.sh -bt dev -v 1
-# <build-increment> is what the last number of the version string will be - if it's 1, it will be 3.0.1.1.ota
-# extra arguments:
-#   -ui <knotty/ncurses/teamcity>
-#      knotty is default and recommended. ncurses is cool, though you have to CTRL+C after completion
 ```
 
 ### Where is my OTA?
 
-`./_build/3.0.1.1.ota`
+`./_build/3.0.1.<increment>.ota`
+
+## build.sh flags
+
+```
+-bt <build-type>
+    required. build-type: [dev|oskr]
+    dev is recommended. if you unlocked a bot with unlock-prod-*.ota, use that
+-v <increment>
+    required. increment: [any int 0-9999]
+    (final file will be 3.0.1.<build increment>.ota)
+-bp <password>
+    boot image signing password: [string]
+    not required for dev builds
+-nd
+    build on bare metal rather than in Docker
+-ui <ui-option>
+    use a different Yocto UI: [knotty|taskexp|taskexp_ncurses|ncurses|teamcity]
+    default is knotty. ncurses is cool but requires you to CTRL+C after completion.
+    only add this argument if you know what you are doing.
+```
 
 ## Development path
 
@@ -116,7 +129,7 @@ If you want to :P
 
 -   New OS base
     -   Yocto Whinlatter rather than Jethro
-        -   glibc 2.42 (latest as of 09-2025)
+        -   glibc 2.42 (latest as of 11-2025)
 -   `victor` software compiled with Clang 20.1.8 rather than 5.0.1
     -	The code is properly fixed so there are no compile warnings
 -   Rainbow eye color
@@ -135,10 +148,10 @@ If you want to :P
 -   Cat and dog detection (basic, similar to Cozmo)
 -   Smaller OTA size - a dev OTA is 153M somehow
 -   New Anki boot animation, new pre-boot-anim splash screen, rainbow backpack light animations
--   TensorFlow Lite has been updated to v2.19.0 (latest as of 07-2025)
+-   TensorFlow Lite has been updated to v2.19.0 (a modern 2025 release)
 	-  This means we can maybe leverage the GPU delegate at some point
 	-  XNNPACK - the CPU delegate - is faster than what was there before
--   OpenCV has been updated to 4.12.0 (latest as of 07-2025)
+-   OpenCV has been updated to 4.12.0 (latest as of 11-2025)
   	-  Much better SDK streaming performance
 -   [Face overlays](https://www.reddit.com/r/AnkiVector/comments/1lteb3m/_/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
         -  How to activate: [wire-os-victor PR #17](https://github.com/os-vector/wire-os-victor/pull/17)
