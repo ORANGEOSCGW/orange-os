@@ -97,11 +97,15 @@ function is_victor_there_and_compatible() {
 #knotty, ncurses, taskexp_ncurses or teamcity - default knotty
 function what_ui() {
     GIVEN_UI="$1"
-    if [[ "${GIVEN_UI}" != "knotty" && "${GIVEN_UI}" != "ncurses" && "${GIVEN_UI}" != "taskexp_ncurses" && "${GIVEN_UI}" != "teamcity" ]]; then
+    if [[ "${GIVEN_UI}" != "knotty" && "${GIVEN_UI}" != "ncurses" && "${GIVEN_UI}" != "taskexp" && "${GIVEN_UI}" != "taskexp_ncurses" && "${GIVEN_UI}" != "teamcity" ]]; then
         errorMsg "Invalid UI option: ${GIVEN_UI}"
         usage
     fi
-    UI_FLAG="-u ${GIVEN_UI}"
+    if [[ "${GIVEN_UI}" == *"taskexp"* ]]; then
+        UI_FLAG="-g -u ${GIVEN_UI}"
+    else
+        UI_FLAG="-u ${GIVEN_UI}"
+    fi
 }
 
 while [ $# -gt 0 ]; do
@@ -113,6 +117,7 @@ while [ $# -gt 0 ]; do
         -v) BUILD_INCREMENT="$2"; shift ;;
         -au) are_you_wire; AUTO_UPDATE=1 ;;
         -ui) what_ui "$2"; shift ;;
+        -nd) NO_DOCKER=1 ;;
         *)
             usage "unknown option: $1"
             exit 1 ;;
@@ -219,14 +224,18 @@ if [[ -z $(docker images -q ${CURRENT_CONTAINER_NAME}) ]]; then
 else
 	echo "Reusing ${CURRENT_CONTAINER_NAME}"
 fi
-docker run -it --rm \
+
+function run_with_docker() {
+    docker run -it --rm \
     -v $(pwd)/anki-deps:/home/$USER/.anki \
     -v $(pwd):$(pwd) \
     -v $(pwd)/build/cache:/home/$USER/.ccache \
     -v $(pwd)/build/gocache:/home/$USER/go \
     -v $(pwd)/build/usercache:/home/$USER/.cache \
-    ${CURRENT_CONTAINER_NAME} bash -c \
-    "cd $(pwd)/poky && \
+    ${CURRENT_CONTAINER_NAME} bash -c $@
+}
+
+FINAL_BUILD_INVOCATION="cd $(pwd)/poky && \
     source build/conf/set_bb_env.sh && \
     export ANKI_BUILD_VERSION=$BUILD_INCREMENT && \
     export AUTO_UPDATE=${AUTO_UPDATE} && \
@@ -240,6 +249,28 @@ docker run -it --rm \
     export BOOT_IMAGE_SIGNING_PASSWORD=${BOOT_PASSWORD} && \
     ${BOOT_MAKE_COMMAND} && \
     ANKIDEV=${ANKIDEV} make"
+
+if [[ ${NO_DOCKER} == "1" ]]; then
+    bash -c "${FINAL_BUILD_INVOCATION}"
+else
+    run_with_docker "${FINAL_BUILD_INVOCATION}"
+fi
+
+    # bash -c \
+    # "cd $(pwd)/poky && \
+    # source build/conf/set_bb_env.sh && \
+    # export ANKI_BUILD_VERSION=$BUILD_INCREMENT && \
+    # export AUTO_UPDATE=${AUTO_UPDATE} && \
+    # ${YOCTO_CLEAN_COMMAND} && \
+    # sleep 2 && \
+    # ${YOCTO_BUILD_COMMAND} && \
+    # cd ${DIRPATH}/ota && \
+    # rm -rf ../_build/*.img ../_build/*.stats ../_build/*.ini ../_build/*.enc && \
+    # export DO_SIGN=${DO_SIGN} && \
+    # export OTA_MANIFEST_SIGNING_KEY=${OTA_SIGNING_KEY_PASSWORD} && \
+    # export BOOT_IMAGE_SIGNING_PASSWORD=${BOOT_PASSWORD} && \
+    # ${BOOT_MAKE_COMMAND} && \
+    # ANKIDEV=${ANKIDEV} make"
 
 echo
 echo -e "\033[1;32mCompleted successfully. Output is in ./_build.\033[0m"
