@@ -74,6 +74,8 @@ cd wire-os
 <details>
 <summary><strong>Build on bare metal (x86_64 and aarch64)</strong></summary>
 
+- Note: Yocto flips out if you try to use Python via a pyenv. Make sure you are using the OS's native Python only.
+
 1. Run a [distribution supported by Yocto](https://docs.yoctoproject.org/dev/ref-manual/system-requirements.html#supported-linux-distributions).
     -   I recommend Debian 12 and up or Ubuntu 22.04 and up. Anything in this list with a glibc version 2.35 or above should work.
     -   Arch Linux seems to work too.
